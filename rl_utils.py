@@ -4,21 +4,28 @@ import torch
 import collections
 import random
 
+# 经验回放缓冲区
 class ReplayBuffer:
+    # capacity是缓冲区的最大容量
     def __init__(self, capacity):
+        # 使用双端队列存储经验
         self.buffer = collections.deque(maxlen=capacity) 
 
+    # 添加一条经验
     def add(self, state, action, reward, next_state, done): 
         self.buffer.append((state, action, reward, next_state, done)) 
 
+    # 从缓冲区中随机采样一个批次的经验
     def sample(self, batch_size): 
         transitions = random.sample(self.buffer, batch_size)
-        state, action, reward, next_state, done = zip(*transitions)
+        state, action, reward, next_state, done = zip(*transitions) # 解包
         return np.array(state), action, reward, np.array(next_state), done 
 
+    # 返回当前缓冲区的经验数量
     def size(self): 
         return len(self.buffer)
 
+# 计算滑动平均，用于平滑曲线
 def moving_average(a, window_size):
     cumulative_sum = np.cumsum(np.insert(a, 0, 0)) 
     middle = (cumulative_sum[window_size:] - cumulative_sum[:-window_size]) / window_size
@@ -27,6 +34,7 @@ def moving_average(a, window_size):
     end = (np.cumsum(a[:-window_size:-1])[::2] / r)[::-1]
     return np.concatenate((begin, middle, end))
 
+# 训练 on-policy 算法的通用函数
 def train_on_policy_agent(env, agent, num_episodes):
     return_list = []
     for i in range(10):
@@ -53,6 +61,7 @@ def train_on_policy_agent(env, agent, num_episodes):
                 pbar.update(1)
     return return_list
 
+# 训练 off-policy 算法的通用函数
 def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size, batch_size):
     return_list = []
     for i in range(10):
@@ -77,7 +86,7 @@ def train_off_policy_agent(env, agent, num_episodes, replay_buffer, minimal_size
                 pbar.update(1)
     return return_list
 
-
+# 计算优势函数
 def compute_advantage(gamma, lmbda, td_delta):
     td_delta = td_delta.detach().numpy()
     advantage_list = []
